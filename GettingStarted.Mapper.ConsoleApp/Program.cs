@@ -43,29 +43,49 @@ namespace GettingStarted.Mapper.ConsoleApp
             var iteration = 1000 * 10000;
             CodeTimerHelper.Initialize();
 
+            #region 手写
+            CodeTimerHelper.Time(string.Format("手写的性能，循环:{0}次", iteration), iteration, () =>
+            {
+                var to = new To
+                {
+                    P1 = from.P1,
+                    P2 = from.P2,
+                    P3 = from.P3,
+                    P4 = from.P4,
+                    P5 = from.P5,
+                    P6 = from.P6.HasValue ? from.P6.Value : default(DateTime)
+                };
+            }); 
+            #endregion
+
+            #region EmitMapper
             var emitMapper = ObjectMapperManager.DefaultInstance.GetMapper<From, To>(
-                    new DefaultMapConfig()
-                    .NullSubstitution<DateTime?, DateTime>((value) => DateTime.Now));
+                        new DefaultMapConfig()
+                        .NullSubstitution<DateTime?, DateTime>((value) => DateTime.Now));
             CodeTimerHelper.Time(string.Format("EmitMapper的性能，循环:{0}次", iteration), iteration, () =>
             {
                 var to = emitMapper.Map(from);
             });
+            #endregion
 
+            #region AutoMapper
             AutoMapper.Mapper.Initialize(cfg => cfg.CreateMap<From, To>()
-                    .ForMember(dest => dest.P6, opt => opt.NullSubstitute(DateTime.Now)));
+                        .ForMember(dest => dest.P6, opt => opt.NullSubstitute(DateTime.Now)));
             CodeTimerHelper.Time(string.Format("AutoMapper的性能，循环:{0}次", iteration), iteration, () =>
             {
                 var to = AutoMapper.Mapper.Map<To>(from);
             });
+            #endregion
 
+            #region Mapster
             TypeAdapterConfig<From, To>
-                .NewConfig()
-                .IgnoreNullValues(true);
+                    .NewConfig()
+                    .IgnoreNullValues(true);
             CodeTimerHelper.Time(string.Format("Mapster的性能，循环:{0}次", iteration), iteration, () =>
             {
                 var to = from.Adapt<To>();
-            });
-
+            }); 
+            #endregion
         }
 
         /// <summary>
